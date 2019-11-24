@@ -39,7 +39,7 @@ def bandpassIIRFilter(data, fs, lowcut=60, highcut=800, order=4):
     nyq = 0.5 * fs
     low = lowcut / nyq
     high = highcut / nyq
-    b, a = signal.butter(order, [low, high], sr=8000, btype='bandpass')
+    b, a = signal.butter(order, [low, high], btype='bandpass')
     #b, a = signal.iirfilter(order, [low, high], rs=60, btype='band', analog = True, ftype = 'cheby2')
     y = signal.lfilter(b, a, data)
 
@@ -66,7 +66,7 @@ for label in labels:
     for file in files:
         # Load and Resample all files to 8k and convert to mono
         print(str(file.parent)+'/'+str(file.name))
-        data, fs = librosa.load(str(file), mono=True)
+        data, fs = librosa.load(str(file), sr=8000,mono=True)
         #y=librosa.to_mono(data)
 
         #frequency,fourierMagnitude,sampleCount = fourierTransform(fs,data,label)
