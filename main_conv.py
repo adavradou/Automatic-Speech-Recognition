@@ -26,7 +26,7 @@ import random
 
 # Audio Path and create labels
 current_directory = os.getcwd()
-train_audio_path = current_directory + '/speech_commands_dataset'
+train_audio_path = current_directory + './speech_commands_dataset_small'
 # train_audio_path = current_directory + '/speech_commands_dataset_TEST'
 dataset_labels = os.listdir(train_audio_path)
 

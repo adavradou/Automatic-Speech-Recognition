@@ -28,7 +28,7 @@ from sklearn.metrics import accuracy_score
 # ###
 
 current_directory = os.getcwd()     # Audio Path
-train_audio_path = current_directory + '/speech_commands_dataset'
+train_audio_path = current_directory + './speech_commands_dataset_full'
 # train_audio_path = current_directory + '/speech_commands_dataset_TEST'
 dataset_labels = os.listdir(train_audio_path)
 
@@ -73,8 +73,8 @@ for label in labels:
             all_label.append(label)
 
 
-print('X data:\n', all_wave)    # [array([-0.0003346 , ..., ], dtype=float32), array....]
-print('Y data:\n', all_label)   # ['zero', ..., 'nine']
+#print('X data:\n', all_wave)    # [array([-0.0003346 , ..., ], dtype=float32), array....]
+#print('Y data:\n', all_label)   # ['zero', ..., 'nine']
 all_wave = np.array(all_wave)
 all_label = np.array(all_label)
 print('Size of X:\n', all_wave.shape)     # (77, 8000)

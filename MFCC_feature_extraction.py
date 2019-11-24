@@ -1,18 +1,12 @@
 import os
 from pathlib import Path
-import wave
+
 
 import matplotlib.pyplot as plt
-from scipy.io import wavfile as wav
 from scipy.fftpack import fft
-import scipy.fftpack
-#from numpy import fft
-import numpy as np
-import librosa
 import sounddevice as sd
 
 import librosa   # for audio processing
-import IPython.display as ipd
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
@@ -70,6 +64,7 @@ current_directory = os.getcwd()
 train_audio_path = Path('./noizy_dataset') #Audio Path
 train_audio_path = Path('./speech_commands_dataset_small') #Audio Path
 train_audio_path = Path('./speech_commands_dataset_medium') #Audio Path
+train_audio_path = Path('./medium_dataset') #Audio Path
 #train_audio_path = Path('./speech_commands_dataset-v0.01-small') #Audio Path
 
 print("tap",train_audio_path)
