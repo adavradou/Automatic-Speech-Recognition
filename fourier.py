@@ -81,7 +81,7 @@ for label in labels:
 
         frequency,fourierMagnitude,sampleCount = fourierTransform(fs,filtered,label)
 
-    break
+#break choose label or one item per label
 
 plt.plot(title='placeholder')
 plt.show()
