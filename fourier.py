@@ -5,6 +5,7 @@ import wave
 import matplotlib.pyplot as plt
 from scipy.io import wavfile as wav
 from scipy.fftpack import fft
+import scipy.fftpack
 #from numpy import fft
 import numpy as np
 import librosa
@@ -14,35 +15,35 @@ import sounddevice as sd
 from scipy import signal
 
 
-def fourier(fs,y,label):
+def fourierTransform(fs,y,label):
     print("fs:",fs,y,type(y),len(y))
     # Number of samplepoints
     N = len(y)
-    # sample spacing
+    print("thelen"+str(len(y)))
+    # sampling period
     T = 1.0 / fs
+
     yf = fft(y)
-    xf = np.linspace(70.0, 400.0, N / 2) # No need for negative semi-axis
 
+    xf = np.linspace(0.0, 1.0/(2.0*T), N/2) * 0.5 # No need for both semi-axis the rfequency domain in Hertz
+    yf = 2.0/N * np.abs(yf[:N//2]) # The frequency magnitude
 
-    fig, ax = plt.subplots()
-    ax.plot(xf, 1.0 / N * np.abs(yf[:N //2]))
-    ax.set_title(str(label)+' - file :'+file.name)
+    plt.plot(xf,yf,label=str(label) + ' - file :' + file.name +"N" + str(N)) # plot the fourier transform
     plt.show()
 
+    return xf,yf,N
 
-#def bandpassIIRFilter(data,fs,lowcut=85,highcut=255,order=4): #maybe amplify result # The voiced speech of a typical adult male will have a fundamental frequency from 85 to 180 Hz, and that of a typical adult female from 165 to 255 Hz.
-#def bandpassIIRFilter(data,fs,lowcut=60,highcut=400,order=4):
-#def bandpassIIRFilter(data,fs,lowcut=40,highcut=3000,order=4):
-#def bandpassIIRFilter(data, fs, lowcut=20, highcut=800, order=4):
-#def bandpassIIRFilter(data, fs, lowcut=300, highcut=3400, order=4):#telephony
-def bandpassIIRFilter(data, fs, lowcut=20, highcut=800, order=4):
+
+
+# The voiced speech of a typical adult male will have a fundamental frequency from 85 to 180 Hz, and that of a typical adult female from 165 to 255 Hz.
+#def bandpassIIRFilter(data, fs, lowcut=300, highcut=3400, order=4):#telephony - i xroia poy prokyptei apo tis anwteres armonikes einai mallon axristi
+def bandpassIIRFilter(data, fs, lowcut=60, highcut=800, order=4):
     nyq = 0.5 * fs
     low = lowcut / nyq
     high = highcut / nyq
     b, a = signal.butter(order, [low, high], btype='bandpass')
     #b, a = signal.iirfilter(order, [low, high], rs=60, btype='band', analog = True, ftype = 'cheby2')
     y = signal.lfilter(b, a, data)
-    print(len(y),y)
 
     return y
 
@@ -64,42 +65,23 @@ duration_of_recordings = []
 for label in labels:
     files = list(train_audio_path.glob(label+'/*.wav'))
     for file in files:
-        # Load and Resample all files to 8k
-        data, fs = librosa.load(str(file),sr=8000)
+        # Load and Resample all files to 8k and convert to mono
+        data, fs = librosa.load(str(file),sr=8000, mono=True)
+        #y=librosa.to_mono(data)
 
-     
+        frequency,fourierMagnitude,sampleCount = fourierTransform(fs,data,label)
 
-        # fig, ax = plt.subplots()
-        # ax.plot(data)
-        # ax.set_title(str(label) + ' - file :' + file.name)
-        # plt.show()
+        #sd.play(data, fs)
+        #status = sd.wait()
 
+        filtered=bandpassIIRFilter(data,fs)
 
-        # If the file is stereo convert to mono by getting avg
-       #w = wave.open(str(file.resolve()), mode='rb')
-       #if w.getnchannels() == 2:
-       #    #audiodata = data.asFloat()  # Avoid buffer overflow
-       #    #y = audiodata.sum(axis=1) / 2 # combine channels
-       #    y = data.T[0] # Keep One channel
-       #else:
-       #    y = data
-        print(data.shape)
-        y=librosa.to_mono(data)
+        #sd.play(filtered, fs)
+        #status = sd.wait()
 
-        fourier(fs, y, label)
-
-       # data = librosa.resample(data, fs, 8000)
-        #fs = 8000
-
-        filtered=bandpassIIRFilter(y,fs)
-        sd.play(y, fs)
-        status = sd.wait()
-
-        sd.play(filtered, fs)
-        status = sd.wait()
-
-        fourier(fs,filtered,label)
+        frequency,fourierMagnitude,sampleCount = fourierTransform(fs,filtered,label)
 
     break
 
-
+plt.plot(title='placeholder')
+plt.show()
