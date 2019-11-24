@@ -7,7 +7,7 @@ from scipy.io import wavfile as wav
 from scipy.fftpack import fft
 #from numpy import fft
 import numpy as np
-
+import librosa
 import sounddevice as sd
 
 
@@ -64,7 +64,10 @@ duration_of_recordings = []
 for label in labels:
     files = list(train_audio_path.glob(label+'/*.wav'))
     for file in files:
-        fs, data = wav.read(file)
+        # Load and Resample all files to 8k
+        data, fs = librosa.load(str(file),sr=8000)
+
+     
 
         # fig, ax = plt.subplots()
         # ax.plot(data)
@@ -73,14 +76,20 @@ for label in labels:
 
 
         # If the file is stereo convert to mono by getting avg
-        w = wave.open(str(file.resolve()), mode='rb')
-        if w.getnchannels() == 2:
-            #audiodata = data.asFloat()  # Avoid buffer overflow
-            #y = audiodata.sum(axis=1) / 2 # combine channels
-            y = data.T[0] # Keep One channel
-        else:
-            y = data
+       #w = wave.open(str(file.resolve()), mode='rb')
+       #if w.getnchannels() == 2:
+       #    #audiodata = data.asFloat()  # Avoid buffer overflow
+       #    #y = audiodata.sum(axis=1) / 2 # combine channels
+       #    y = data.T[0] # Keep One channel
+       #else:
+       #    y = data
+        print(data.shape)
+        y=librosa.to_mono(data)
+
         fourier(fs, y, label)
+
+       # data = librosa.resample(data, fs, 8000)
+        #fs = 8000
 
         filtered=bandpassIIRFilter(y,fs)
         sd.play(y, fs)
