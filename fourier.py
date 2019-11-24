@@ -31,11 +31,15 @@ def fourier(fs,y,label):
 
 
 #def bandpassIIRFilter(data,fs,lowcut=85,highcut=255,order=4): #maybe amplify result # The voiced speech of a typical adult male will have a fundamental frequency from 85 to 180 Hz, and that of a typical adult female from 165 to 255 Hz.
-def bandpassIIRFilter(data,fs,lowcut=60,highcut=400,order=4):
+#def bandpassIIRFilter(data,fs,lowcut=60,highcut=400,order=4):
+#def bandpassIIRFilter(data,fs,lowcut=40,highcut=3000,order=4):
+#def bandpassIIRFilter(data, fs, lowcut=20, highcut=800, order=4):
+#def bandpassIIRFilter(data, fs, lowcut=300, highcut=3400, order=4):#telephony
+def bandpassIIRFilter(data, fs, lowcut=20, highcut=800, order=4):
     nyq = 0.5 * fs
     low = lowcut / nyq
     high = highcut / nyq
-    b, a = signal.butter(order, [low, high], btype='bandpass',  analog=True)
+    b, a = signal.butter(order, [low, high], btype='bandpass')
     #b, a = signal.iirfilter(order, [low, high], rs=60, btype='band', analog = True, ftype = 'cheby2')
     y = signal.lfilter(b, a, data)
     print(len(y),y)
@@ -76,7 +80,7 @@ for label in labels:
             y = data.T[0] # Keep One channel
         else:
             y = data
-
+        fourier(fs, y, label)
 
         filtered=bandpassIIRFilter(y,fs)
         sd.play(y, fs)
