@@ -25,7 +25,7 @@ import random
 from scipy import signal
 
 
-def fourierTransform(fs,y,label):
+def fourierTransform(fs,y,label,no_of_peaks):
     # Number of samplepoints
     N = len(y)
     # sampling period
@@ -34,12 +34,25 @@ def fourierTransform(fs,y,label):
     yf = fft(y)
 
     xf = np.linspace(0.0, 1.0/(2.0*T), N/2) * 0.5 # No need for both semi-axis the rfequency domain in Hertz
-    yf = 2.0/N * np.abs(yf[:N//2]) # The frequency magnitude
+    yf = 2.0 * np.abs(yf[:N//2]) # The frequency magnitude
 
-    plt.plot(xf,yf,label=str(label) + ' - file :' + file.name +"N" + str(N)) # plot the fourier transform
-    plt.show()
+    #plt.plot(xf,yf,label=str(label) + ' - file :' + file.name +"N" + str(N)) # plot the fourier transform
+    #plt.show()
 
-    return xf,yf,N
+    # Find dominant freq peak centers and train matching them with their frequency domains
+    peaks=[]
+
+    i=0
+    step=10 # Peaks greter than step Hz in distance
+    for point in yf:
+        peaks.append([xf[i],point])
+        i+=1
+
+    # Choose greatest magnitude
+    peaks=sorted(peaks, key=lambda x: x[1],reverse=True)
+    peaks=peaks[:no_of_peaks]
+
+    return xf,yf,N,peaks
 
 
 
@@ -120,10 +133,16 @@ for audio in processedAudioFiles:
     #sd.play(audio, sr)
     #status = sd.wait()
 
+    frequency, fourierMagnitude, sampleCount, peaks = fourierTransform(sr, audio, label, no_of_peaks=66)
+
+    #audio <- Raw Signal
+    #fourierMagnitude <- Fourier representation of the signal (1o tetartimorio)
 
     i+=1
 
 print("Features have been extracted")
+
+
 
 # Neural Network Classification
 
