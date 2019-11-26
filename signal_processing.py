@@ -105,10 +105,6 @@ meanDuration=sum/i
 
 sumdur=0
 i=0
-fsizeEQ=0
-fsizeL=0
-fsizeG=0
-
 
 all_features = []
 desiredNoOfFeatures=13
@@ -129,19 +125,19 @@ for audio in processedAudioFiles:
     # Stretrch audio to normalise spoken word duration
     audio = librosa.effects.time_stretch(audio, ratio)
 
-
     #sd.play(audio, sr)
     #status = sd.wait()
 
     frequency, fourierMagnitude, sampleCount, peaks = fourierTransform(sr, audio, label, no_of_peaks=66)
 
-    #audio <- Raw Signal
-    #fourierMagnitude <- Fourier representation of the signal (1o tetartimorio)
+# audio <- Raw Signal
+# fourierMagnitude <- Fourier representation of the signal (1o tetartimorio)
+
+    all_features.append(fourierMagnitude)
 
     i+=1
 
 print("Features have been extracted")
-
 
 
 # Neural Network Classification
