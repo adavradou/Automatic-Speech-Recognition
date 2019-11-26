@@ -56,34 +56,23 @@ def bandpassIIRFilter(data, fs, lowcut=85, highcut=255, order=4):
 
     return y
 
-# Sample rate and desired cutoff frequencies (in Hz).
-lowcut = 0.5
-highcut = 0.7
-
 
 current_directory = os.getcwd()
 
-train_audio_path = Path('./noizy_dataset') #Audio Path
-train_audio_path = Path('./speech_commands_dataset_small') #tiny
-#train_audio_path = Path('./speech_commands_dataset_medium') #small
-#train_audio_path = Path('./free-spoken-digit-dataset-medium')#medium 200 per class
-train_audio_path = Path('./medium_dataset') #large 500 per class
-#train_audio_path = Path('./speech_commands_v0.01') #extra large 2000 per class
+# Choose audio dataset
+train_audio_path = Path('./free-spoken-digit-dataset-medium') #Audio Path
 
 print("tap",train_audio_path)
 
 labels = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 
-all_features = []
-all_label = []
-desiredNoOfFeatures=13
 i=1
 durations=[]
-
 sum=0
-print("Signal processing")
 processedAudioFiles=[]
+all_label = []
 sr=8000
+print("Signal processing")
 for label in labels:
     files = list(train_audio_path.glob(label + '/*.wav'))
     print("processing " + label)
@@ -100,16 +89,23 @@ for label in labels:
             print(sr)
 
 meanDuration=sum/i
-print("Extracting Features from "+str(i)+" files, mean duration="+str(meanDuration))
+
 sumdur=0
 i=0
 fsizeEQ=0
 fsizeL=0
 fsizeG=0
+
+
+all_features = []
+desiredNoOfFeatures=13
+# Features Extraction an time normalisation
+print("Extracting Features from "+str(i)+" files, mean duration="+str(meanDuration))
 for audio in processedAudioFiles:
 
-    #sd.play(originalSignal, sr)
+    #sd.play(audio, sr)
     #status = sd.wait()
+
     duration = librosa.get_duration(audio)
     sumdur+=duration
 
@@ -117,90 +113,39 @@ for audio in processedAudioFiles:
     if ratio < 0.1:
         ratio = 0.05
 
+    # Stretrch audio to normalise spoken word duration
     audio = librosa.effects.time_stretch(audio, ratio)
-    duration = librosa.get_duration(audio)
-    #sd.play(filtered, sr)
+
+    mfccs = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=desiredNoOfFeatures,
+                                 hop_length=178)  # Get specific number of components
+    mfccs_flat = mfccs.flatten()
+
+    #sd.play(audio, sr)
     #status = sd.wait()
 
-    #mfccs = librosa.feature.mfcc(y=filtered, sr=sr) # Generate mfccs from a time series
-    #mfccs = librosa.feature.mfcc(y=filtered, sr=sr, hop_length=1024, htk=True)  # Using a different hop length and HTK-style Mel frequencies
+    featuresSize = desiredNoOfFeatures * mfccs.shape[1]
 
-    #S = librosa.feature.melspectrogram(y=filtered, sr=sr, n_mels=40,fmax=2000) # Use a pre-computed log-power Mel spectrogram
-    #mfccs = librosa.feature.mfcc(S=librosa.power_to_db(S))
-
-    mfccs = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=desiredNoOfFeatures, hop_length=178) # Get specific number of components
-
-    # Visualize the MFCC series
-
-    #librosa.display.specshow(mfccs, x_axis='time')
-    #plt.colorbar()
-    #plt.title('MFCC'+str(file.parent)+str(mfccs.shape))
-    #plt.tight_layout()
-    #plt.show()
-
-    # Compare different DCT bases
-    #m_slaney = librosa.feature.mfcc(y=filtered, sr=sr, dct_type=2)
-    #m_htk = librosa.feature.mfcc(y=filtered, sr=sr, dct_type=3)
-    #m_htk_flat=m_htk.flatten()
-    # Visualization
-    #plt.figure(figsize=(10, 6))
-    #plt.subplot(2, 1, 1)
-    #librosa.display.specshow(m_slaney, x_axis='time')
-    #plt.title('RASTAMAT / Auditory toolbox (dct_type=2)')
-    #plt.colorbar()
-    #plt.subplot(2, 1, 2)
-    #librosa.display.specshow(m_htk, x_axis='time')
-    #plt.title('HTK-style (dct_type=3)')
-    #plt.colorbar()
-    #plt.tight_layout()
-    #plt.show()
-    mfccs_flat=mfccs.flatten()
-    #mean_mfccs=mfccs.mean(axis=1)
-    ##########all_features.append(features)
-    #print("MFCCS",mfccs.shape)
-    ##########all_label.append(label)
-
-    # LPC
-    #lpc=librosa.lpc(filtered, 16)
-    #lpc_and_mean_mfcc = np.concatenate((mean_mfccs, lpc), axis=0)
-    #lpc_and_flat_mfcc = np.concatenate((mfccs_flat, lpc), axis=0)
-
-    featuresSize=desiredNoOfFeatures*mfccs.shape[1]
-
-
-
-    #print("LPC+MFCC", mfccs_flat.shape)
+    # print("LPC+MFCC", mfccs_flat.shape)
 
     if len(mfccs_flat) < featuresSize:
-        zero_padded = np.lib.pad(mfccs_flat, ((0),(featuresSize - len(mfccs_flat))), 'constant', constant_values=(1))
+        zero_padded = np.lib.pad(mfccs_flat, ((0), (featuresSize - len(mfccs_flat))), 'constant', constant_values=(1))
         all_features.append(zero_padded)
-        fsizeL+=1
-        print(len(mfccs_flat) - featuresSize, mfccs.shape,len(audio),duration)
-        #all_features.append(mfccs_flat)
+        fsizeL += 1
+        print(len(mfccs_flat) - featuresSize, mfccs.shape, len(audio), duration)
+        # all_features.append(mfccs_flat)
     elif len(mfccs_flat) > featuresSize:
         all_features.append(mfccs_flat[:featuresSize])
-        fsizeG+=1
-        print(len(mfccs_flat) - featuresSize, mfccs.shape,len(audio),duration)
+        fsizeG += 1
+        print(len(mfccs_flat) - featuresSize, mfccs.shape, len(audio), duration)
     else:
-        fsizeEQ+=1
+        fsizeEQ += 1
         all_features.append(mfccs_flat)
-        #print(len(mfccs_flat) - featuresSize, mfccs.shape,len(audio),duration)
-    #all_features.append(m_htk_flat)
-
-    if(mfccs.shape!=(desiredNoOfFeatures,18)):
-       # print(len(audio), i, mfccs_flat.shape, file.name, file.parent)
-        #S = librosa.feature.melspectrogram(y=audio, sr=sr)
-        #plt.figure(figsize=(10, 4))
-        #S_dB = librosa.power_to_db(S, ref=np.max)
-        #librosa.display.specshow(S_dB, x_axis='time', y_axis='mel', sr=sr, fmax=8000)
-        #plt.colorbar(format='%+2.0f dB')
-        #plt.title('Mel-frequency spectrogram')
-        #plt.tight_layout()
-        #plt.show()
-        pass
-        #print(mfccs_flat)
-        #print(all_features[0])
+        # print(len(mfccs_flat) - featuresSize, mfccs.shape,len(audio),duration)
+        # all_features.append(m_htk_flat)
     i+=1
+
+
+# Neural Network Classification
 meanDuration=sumdur/i
 print("Extracting Features from "+str(i)+" files, trimmed duration="+str(meanDuration)+" < "+ str(fsizeL)+" = " + str(fsizeEQ) + " > " + str(fsizeG))
 print("all_features[0]",all_features[0],all_features[0].shape)
@@ -302,3 +247,4 @@ for rounds in range(10):
 
 plt.plot(title='placeholder')
 plt.show()
+
