@@ -156,4 +156,8 @@ classes = list(le.classes_)
 
 np.save(current_directory + '/classes_dense.npy', le.classes_)
 y_ = np_utils.to_categorical(y_, num_classes=len(labels))     # From int to one-hot
+print('to_categorical:\n', y_)
 
+
+# Neural here
+#x_tr, x_val, y_tr, y_val = train_test_split(np.array(x_), np.array(y_), stratify=y_, test_size=0.2, random_state=777, shuffle=True)
