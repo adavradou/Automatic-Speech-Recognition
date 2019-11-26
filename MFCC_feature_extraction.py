@@ -115,6 +115,7 @@ for audio in processedAudioFiles:
         ratio = duration / meanDuration
 
     audio = librosa.effects.time_stretch(audio, ratio)
+    duration = librosa.get_duration(audio)
     #sd.play(filtered, sr)
     #status = sd.wait()
 
@@ -124,7 +125,7 @@ for audio in processedAudioFiles:
     #S = librosa.feature.melspectrogram(y=filtered, sr=sr, n_mels=40,fmax=2000) # Use a pre-computed log-power Mel spectrogram
     #mfccs = librosa.feature.mfcc(S=librosa.power_to_db(S))
 
-    mfccs = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=desiredNoOfFeatures, hop_length=178, ) # Get specific number of components
+    mfccs = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=desiredNoOfFeatures, hop_length=178) # Get specific number of components
 
     # Visualize the MFCC series
 
@@ -171,16 +172,16 @@ for audio in processedAudioFiles:
         zero_padded = np.lib.pad(mfccs_flat, ((0),(featuresSize - len(mfccs_flat))), 'constant', constant_values=(1))
         all_features.append(zero_padded)
         fsizeL+=1
-        print(len(mfccs_flat) - featuresSize, mfccs.shape)
+        print(len(mfccs_flat) - featuresSize, mfccs.shape,len(audio),duration)
         #all_features.append(mfccs_flat)
     elif len(mfccs_flat) > featuresSize:
         all_features.append(mfccs_flat[:featuresSize])
         fsizeG+=1
-        print(len(mfccs_flat) - featuresSize,mfccs.shape)
+        print(len(mfccs_flat) - featuresSize, mfccs.shape,len(audio),duration)
     else:
         fsizeEQ+=1
         all_features.append(mfccs_flat)
-        print(len(mfccs_flat) - featuresSize, mfccs.shape)
+        print(len(mfccs_flat) - featuresSize, mfccs.shape,len(audio),duration)
     #all_features.append(m_htk_flat)
 
     if(mfccs.shape!=(desiredNoOfFeatures,18)):
