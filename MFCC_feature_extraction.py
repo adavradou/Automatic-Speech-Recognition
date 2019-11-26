@@ -45,7 +45,7 @@ def fourierTransform(fs,y,label):
 
 # The voiced speech of a typical adult male will have a fundamental frequency from 85 to 180 Hz, and that of a typical adult female from 165 to 255 Hz.
 #def bandpassIIRFilter(data, fs, lowcut=300, highcut=3400, order=4):#telephony - i xroia poy prokyptei apo tis anwteres armonikes einai mallon axristi
-def bandpassIIRFilter(data, fs, lowcut=60, highcut=800, order=4):
+def bandpassIIRFilter(data, fs, lowcut=80, highcut=600, order=4):
     nyq = 0.5 * fs
     low = lowcut / nyq
     high = highcut / nyq
@@ -64,9 +64,9 @@ current_directory = os.getcwd()
 
 train_audio_path = Path('./noizy_dataset') #Audio Path
 train_audio_path = Path('./speech_commands_dataset_small') #Audio Path
-train_audio_path = Path('./speech_commands_dataset_medium') #Audio Path
-#train_audio_path = Path('./free-spoken-digit-dataset-medium')
-train_audio_path = Path('./medium_dataset') #Audio Path
+#train_audio_path = Path('./speech_commands_dataset_medium') #Audio Path
+train_audio_path = Path('./free-spoken-digit-dataset-medium')
+#train_audio_path = Path('./medium_dataset') #Audio Path
 #train_audio_path = Path('./speech_commands_dataset-v0.01-small') #Audio Path
 
 print("tap",train_audio_path)
@@ -75,119 +75,131 @@ labels = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight"
 
 all_features = []
 all_label = []
-desiredNoOfFeatures=40
+desiredNoOfFeatures=13
 i=1
 durations=[]
 
 sum=0
+print("Signal processing")
+processedAudioFiles=[]
+sr=8000
 for label in labels:
     files = list(train_audio_path.glob(label + '/*.wav'))
+    print("processing " + label)
     for file in files:
         originalSignal, sr = librosa.load(str(file), sr=8000, mono=True)
-        trimmedSignal, index = librosa.effects.trim(originalSignal)
-        duration=librosa.get_duration(trimmedSignal)
-        sum=sum+duration
+        processedSignal = bandpassIIRFilter(originalSignal, sr)
+        processedSignal, index = librosa.effects.trim(originalSignal)
+        duration = librosa.get_duration(processedSignal)
+        sum+=duration
+        processedAudioFiles.append(processedSignal)
         i+=1
+        all_label.append(label)
 
 meanDuration=sum/i
 print("Extracting Features from "+str(i)+" files, mean duration="+str(meanDuration))
-for label in labels:
-    files = list(train_audio_path.glob(label+'/*.wav'))
-    print("processing "+label)
-    for file in files:
-        # Load and Resample all files to 8k and convert to mono
-        #print(str(file.parent)+'/'+str(file.name))
-        originalSignal, sr = librosa.load(str(file), sr=8000, mono=True)
-        processedSignal, index = librosa.effects.trim(originalSignal)
-        duration = librosa.get_duration(processedSignal)
-        if duration > meanDuration:
-            ratio = meanDuration / duration
-        else:
-            ratio = duration / meanDuration
+sumdur=0
+i=0
+fsizeEQ=0
+fsizeL=0
+fsizeG=0
+for audio in processedAudioFiles:
 
-        processedSignal = librosa.effects.time_stretch(processedSignal, ratio)
+    #sd.play(originalSignal, sr)
+    #status = sd.wait()
+    duration = librosa.get_duration(audio)
+    sumdur+=duration
+    if duration > meanDuration:
+        ratio = meanDuration / duration
+    else:
+        ratio = duration / meanDuration
 
-        #sd.play(originalSignal, sr)
-        #status = sd.wait()
-#
-        processedSignal = bandpassIIRFilter(processedSignal, sr)
+    audio = librosa.effects.time_stretch(audio, ratio)
+    #sd.play(filtered, sr)
+    #status = sd.wait()
 
-        #sd.play(filtered, sr)
-        #status = sd.wait()
+    #mfccs = librosa.feature.mfcc(y=filtered, sr=sr) # Generate mfccs from a time series
+    #mfccs = librosa.feature.mfcc(y=filtered, sr=sr, hop_length=1024, htk=True)  # Using a different hop length and HTK-style Mel frequencies
 
-        #mfccs = librosa.feature.mfcc(y=filtered, sr=sr) # Generate mfccs from a time series
-        #mfccs = librosa.feature.mfcc(y=filtered, sr=sr, hop_length=1024, htk=True)  # Using a different hop length and HTK-style Mel frequencies
+    #S = librosa.feature.melspectrogram(y=filtered, sr=sr, n_mels=40,fmax=2000) # Use a pre-computed log-power Mel spectrogram
+    #mfccs = librosa.feature.mfcc(S=librosa.power_to_db(S))
 
-        #S = librosa.feature.melspectrogram(y=filtered, sr=sr, n_mels=40,fmax=2000) # Use a pre-computed log-power Mel spectrogram
-        #mfccs = librosa.feature.mfcc(S=librosa.power_to_db(S))
+    mfccs = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=desiredNoOfFeatures, hop_length=178, ) # Get specific number of components
 
-        mfccs = librosa.feature.mfcc(y=processedSignal, sr=sr, n_mfcc=13) # Get specific number of components
+    # Visualize the MFCC series
 
-        # Visualize the MFCC series
+    #librosa.display.specshow(mfccs, x_axis='time')
+    #plt.colorbar()
+    #plt.title('MFCC'+str(file.parent)+str(mfccs.shape))
+    #plt.tight_layout()
+    #plt.show()
 
-        #librosa.display.specshow(mfccs, x_axis='time')
-        #plt.colorbar()
-        #plt.title('MFCC'+str(file.parent)+str(mfccs.shape))
+    # Compare different DCT bases
+    #m_slaney = librosa.feature.mfcc(y=filtered, sr=sr, dct_type=2)
+    #m_htk = librosa.feature.mfcc(y=filtered, sr=sr, dct_type=3)
+    #m_htk_flat=m_htk.flatten()
+    # Visualization
+    #plt.figure(figsize=(10, 6))
+    #plt.subplot(2, 1, 1)
+    #librosa.display.specshow(m_slaney, x_axis='time')
+    #plt.title('RASTAMAT / Auditory toolbox (dct_type=2)')
+    #plt.colorbar()
+    #plt.subplot(2, 1, 2)
+    #librosa.display.specshow(m_htk, x_axis='time')
+    #plt.title('HTK-style (dct_type=3)')
+    #plt.colorbar()
+    #plt.tight_layout()
+    #plt.show()
+    mfccs_flat=mfccs.flatten()
+    #mean_mfccs=mfccs.mean(axis=1)
+    ##########all_features.append(features)
+    #print("MFCCS",mfccs.shape)
+    ##########all_label.append(label)
+
+    # LPC
+    #lpc=librosa.lpc(filtered, 16)
+    #lpc_and_mean_mfcc = np.concatenate((mean_mfccs, lpc), axis=0)
+    #lpc_and_flat_mfcc = np.concatenate((mfccs_flat, lpc), axis=0)
+
+    featuresSize=desiredNoOfFeatures*18
+
+
+
+    #print("LPC+MFCC", mfccs_flat.shape)
+
+    if len(mfccs_flat) < featuresSize:
+        zero_padded = np.lib.pad(mfccs_flat, ((0),(featuresSize - len(mfccs_flat))), 'constant', constant_values=(1))
+        all_features.append(zero_padded)
+        fsizeL+=1
+        print(len(mfccs_flat) - featuresSize, mfccs.shape)
+        #all_features.append(mfccs_flat)
+    elif len(mfccs_flat) > featuresSize:
+        all_features.append(mfccs_flat[:featuresSize])
+        fsizeG+=1
+        print(len(mfccs_flat) - featuresSize,mfccs.shape)
+    else:
+        fsizeEQ+=1
+        all_features.append(mfccs_flat)
+        print(len(mfccs_flat) - featuresSize, mfccs.shape)
+    #all_features.append(m_htk_flat)
+
+    if(mfccs.shape!=(desiredNoOfFeatures,18)):
+       # print(len(audio), i, mfccs_flat.shape, file.name, file.parent)
+        #S = librosa.feature.melspectrogram(y=audio, sr=sr)
+        #plt.figure(figsize=(10, 4))
+        #S_dB = librosa.power_to_db(S, ref=np.max)
+        #librosa.display.specshow(S_dB, x_axis='time', y_axis='mel', sr=sr, fmax=8000)
+        #plt.colorbar(format='%+2.0f dB')
+        #plt.title('Mel-frequency spectrogram')
         #plt.tight_layout()
         #plt.show()
-
-        # Compare different DCT bases
-        #m_slaney = librosa.feature.mfcc(y=filtered, sr=sr, dct_type=2)
-        #m_htk = librosa.feature.mfcc(y=filtered, sr=sr, dct_type=3)
-        #m_htk_flat=m_htk.flatten()
-        # Visualization
-        #plt.figure(figsize=(10, 6))
-        #plt.subplot(2, 1, 1)
-        #librosa.display.specshow(m_slaney, x_axis='time')
-        #plt.title('RASTAMAT / Auditory toolbox (dct_type=2)')
-        #plt.colorbar()
-        #plt.subplot(2, 1, 2)
-        #librosa.display.specshow(m_htk, x_axis='time')
-        #plt.title('HTK-style (dct_type=3)')
-        #plt.colorbar()
-        #plt.tight_layout()
-        #plt.show()
-        mfccs_flat=mfccs.flatten()
-        mean_mfccs=mfccs.mean(axis=1)
-        ##########all_features.append(features)
-        #print("MFCCS",mfccs.shape)
-        ##########all_label.append(label)
-
-        # LPC
-        #lpc=librosa.lpc(filtered, 16)
-        #lpc_and_mean_mfcc = np.concatenate((mean_mfccs, lpc), axis=0)
-        #lpc_and_flat_mfcc = np.concatenate((mfccs_flat, lpc), axis=0)
-
-        featuresSize=desiredNoOfFeatures*16
-
-
-
-        #print("LPC+MFCC", mfccs_flat.shape)
-
-        if len(mfccs_flat) < featuresSize:
-            zero_padded = np.lib.pad(mfccs_flat, ((0),(featuresSize - len(mfccs_flat))), 'constant', constant_values=(1))
-            all_features.append(zero_padded)
-            #all_features.append(mfccs_flat)
-        else:
-            all_features.append(mfccs_flat)
-
-        #all_features.append(m_htk_flat)
-        all_label.append(label)
-        if(mfccs.shape!=(13,16)):
-            print(len(processedSignal),i,mfccs_flat.shape,file.name,file.parent)
-            S = librosa.feature.melspectrogram(y=processedSignal, sr=sr)
-            plt.figure(figsize=(10, 4))
-            S_dB = librosa.power_to_db(S, ref=np.max)
-            librosa.display.specshow(S_dB, x_axis='time', y_axis='mel', sr=sr, fmax=8000)
-            plt.colorbar(format='%+2.0f dB')
-            plt.title('Mel-frequency spectrogram')
-            plt.tight_layout()
-            plt.show()
-            pass
-            #print(mfccs_flat)
-            #print(all_features[0])
-        i+=1
-
+        pass
+        #print(mfccs_flat)
+        #print(all_features[0])
+    i+=1
+meanDuration=sumdur/i
+print("Extracting Features from "+str(i)+" files, trimmed duration="+str(meanDuration)+" < "+ str(fsizeL)+" = " + str(fsizeEQ) + " > " + str(fsizeG))
+print("all_features[0]",all_features[0],all_features[0].shape)
 print("Features have been extracted")
 
 
