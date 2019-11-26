@@ -36,7 +36,7 @@ def fourierTransform(fs,y,label,no_of_peaks):
     yf = fft(y)
 
     xf = np.linspace(0.0, 1.0/(2.0*T), N/2) * 0.5 # No need for both semi-axis the rfequency domain in Hertz
-    yf = 2.0/N * np.abs(yf[:N//2]) # The frequency magnitude
+    yf = 2.0 * np.abs(yf[:N//2]) # The frequency magnitude
 
     #plt.plot(xf,yf,label=str(label) + ' - file :' + file.name +"N" + str(N)) # plot the fourier transform
     #plt.show()
@@ -49,7 +49,6 @@ def fourierTransform(fs,y,label,no_of_peaks):
     for point in yf:
         peaks.append([xf[i],point])
         i+=1
-
 
     # Choose greatest magnitude
     peaks=sorted(peaks, key=lambda x: x[1],reverse=True)
@@ -79,10 +78,11 @@ highcut = 0.7
 current_directory = os.getcwd()
 
 train_audio_path = Path('./noizy_dataset') #Audio Path
-train_audio_path = Path('./testing_numbers') #Audio Path
-train_audio_path = Path('./speech_commands_dataset_medium') #Audio Path
-train_audio_path = Path('./medium_dataset') #Audio Path
+#train_audio_path = Path('./testing_numbers') #Audio Path
+#train_audio_path = Path('./speech_commands_dataset_medium') #Audio Path
+#train_audio_path = Path('./medium_dataset') #Audio Path
 train_audio_path = Path('./speech_commands_dataset_small') #Audio Path
+#train_audio_path = Path('./free-spoken-digit-dataset-medium')
 #train_audio_path = Path('./speech_commands_dataset-v0.01-small') #Audio Path
 
 print("tap",train_audio_path)
@@ -92,13 +92,25 @@ labels = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight"
 all_wave = []
 all_label = []
 i=0
+
 for label in labels:
     files = list(train_audio_path.glob(label+'/*.wav'))
     for file in files:
         # Load and Resample all files to 8k and convert to mono
         #print(str(file.parent)+'/'+str(file.name))
-        data, fs = librosa.load(str(file), sr=8000,mono=True)
+        originalSignal, fs = librosa.load(str(file), sr=8000, mono=True)
+        data, index = librosa.effects.trim(originalSignal)
+        duration=librosa.get_duration(data)
+        if duration > 0.35:
+            ratio = 0.35 / duration
+        else:
+            ratio = duration / 0.35
+            
+        data = librosa.effects.time_stretch(data, ratio)
+
+        featuresSize=fs
         #y=librosa.to_mono(data)
+        #print(len(data),fs)
 
         # Check filtering
         #frequency,fourierMagnitude,sampleCount = fourierTransform(fs,data,label)
@@ -135,6 +147,7 @@ for label in labels:
 # Peaks Distance
         peak_frequency_domains=[]
         i=0
+        prev_peak=0
         for peak in peaks:
            if i >= 1:
                peak_frequency_domains.append(peak[0]-prev_peak[0])
@@ -144,8 +157,14 @@ for label in labels:
            i+=1
 
         flattened_peaks = [item for sublist in peaks for item in sublist]
-        #all_wave.append(peak_frequency_domains)
-        all_wave.append(np.concatenate((flattened_peaks, peak_frequency_domains), axis=0))
+        all_wave.append(peak_frequency_domains)
+        #all_wave.append(np.concatenate((flattened_peaks, peak_frequency_domains), axis=0))
+
+        #if len(data) < featuresSize:
+        #    all_wave.append(np.lib.pad(data, ((0),(featuresSize - len(data))), 'constant', constant_values=(0)))
+        #else:
+        #    all_wave.append(data[:featuresSize])
+
         all_label.append(label)
 
 
@@ -209,7 +228,13 @@ plt.plot(history.history['val_loss'], label='test')
 plt.legend()
 plt.show()
 
-model = load_model(filepath)
+#plt.plot(history.history['acc'], label='train')
+#plt.plot(history.history['val_acc'], label='test')
+#plt.title('Accuracy')
+#plt.legend()
+#plt.show()
+
+#model = load_model(filepath)
 
 # evaluate model
 _, accuracy = model.evaluate(x_tr, y_tr)

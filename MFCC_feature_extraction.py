@@ -45,7 +45,8 @@ def fourierTransform(fs,y,label):
 
 # The voiced speech of a typical adult male will have a fundamental frequency from 85 to 180 Hz, and that of a typical adult female from 165 to 255 Hz.
 #def bandpassIIRFilter(data, fs, lowcut=300, highcut=3400, order=4):#telephony - i xroia poy prokyptei apo tis anwteres armonikes einai mallon axristi
-def bandpassIIRFilter(data, fs, lowcut=80, highcut=600, order=4):
+#def bandpassIIRFilter(data, fs, lowcut=60, highcut=800, order=4):
+def bandpassIIRFilter(data, fs, lowcut=60, highcut=800, order=4):
     nyq = 0.5 * fs
     low = lowcut / nyq
     high = highcut / nyq
@@ -63,11 +64,11 @@ highcut = 0.7
 current_directory = os.getcwd()
 
 train_audio_path = Path('./noizy_dataset') #Audio Path
-train_audio_path = Path('./speech_commands_dataset_small') #Audio Path
-#train_audio_path = Path('./speech_commands_dataset_medium') #Audio Path
-train_audio_path = Path('./free-spoken-digit-dataset-medium')
-#train_audio_path = Path('./medium_dataset') #Audio Path
-#train_audio_path = Path('./speech_commands_dataset-v0.01-small') #Audio Path
+train_audio_path = Path('./speech_commands_dataset_small') #tiny
+#train_audio_path = Path('./speech_commands_dataset_medium') #small
+#train_audio_path = Path('./free-spoken-digit-dataset-medium')#medium 200 per class
+train_audio_path = Path('./medium_dataset') #large 500 per class
+#train_audio_path = Path('./speech_commands_v0.01') #extra large 2000 per class
 
 print("tap",train_audio_path)
 
@@ -95,6 +96,8 @@ for label in labels:
         processedAudioFiles.append(processedSignal)
         i+=1
         all_label.append(label)
+        if sr != 8000:
+            print(sr)
 
 meanDuration=sum/i
 print("Extracting Features from "+str(i)+" files, mean duration="+str(meanDuration))
@@ -109,10 +112,10 @@ for audio in processedAudioFiles:
     #status = sd.wait()
     duration = librosa.get_duration(audio)
     sumdur+=duration
-    if duration > meanDuration:
-        ratio = meanDuration / duration
-    else:
-        ratio = duration / meanDuration
+
+    ratio = duration / meanDuration
+    if ratio < 0.1:
+        ratio = 0.05
 
     audio = librosa.effects.time_stretch(audio, ratio)
     duration = librosa.get_duration(audio)
@@ -162,7 +165,7 @@ for audio in processedAudioFiles:
     #lpc_and_mean_mfcc = np.concatenate((mean_mfccs, lpc), axis=0)
     #lpc_and_flat_mfcc = np.concatenate((mfccs_flat, lpc), axis=0)
 
-    featuresSize=desiredNoOfFeatures*18
+    featuresSize=desiredNoOfFeatures*mfccs.shape[1]
 
 
 
@@ -181,7 +184,7 @@ for audio in processedAudioFiles:
     else:
         fsizeEQ+=1
         all_features.append(mfccs_flat)
-        print(len(mfccs_flat) - featuresSize, mfccs.shape,len(audio),duration)
+        #print(len(mfccs_flat) - featuresSize, mfccs.shape,len(audio),duration)
     #all_features.append(m_htk_flat)
 
     if(mfccs.shape!=(desiredNoOfFeatures,18)):
@@ -252,9 +255,9 @@ model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['ac
 # Early Stopping
 es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=40, min_delta=0.05)
 # Keep only a single checkpoint, the best over test accuracy.
-filepath = current_directory + '/model_MFCC.hdf5'
+filepath = current_directory + '/MFCC_stretched('+str(train_audio_path)+'.hdf5'
 mc = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
-model.save(current_directory + '/model_MFCC.hdf5', True, True)
+model.save(current_directory + '/MFCC_stretched('+str(train_audio_path)+'.hdf5', True, True)
 
 # Fit Model
 history = model.fit(x_tr, y_tr, epochs=100, callbacks=[es, mc], batch_size=64, validation_data=(x_val, y_val))
