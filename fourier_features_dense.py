@@ -214,9 +214,9 @@ model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['ac
 # Early Stopping
 es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=40, min_delta=0.05)
 # Keep only a single checkpoint, the best over test accuracy.
-filepath = current_directory + '/MFCC_stretched('+str(train_audio_path)+'.hdf5'
+filepath = current_directory + '/MFCC_fourier_features_dense('+str(train_audio_path)+').hdf5'
 mc = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
-model.save(current_directory + '/MFCC_stretched('+str(train_audio_path)+'.hdf5', True, True)
+model.save(current_directory + '/MFCC_fourier_features_dense('+str(train_audio_path)+').hdf5', True, True)
 
 # Fit Model
 history = model.fit(x_tr, y_tr, epochs=100, callbacks=[es, mc], batch_size=64, validation_data=(x_val, y_val))
