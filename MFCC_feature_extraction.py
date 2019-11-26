@@ -7,6 +7,7 @@ from scipy.fftpack import fft
 import sounddevice as sd
 
 import librosa   # for audio processing
+import librosa.display
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
@@ -64,6 +65,7 @@ current_directory = os.getcwd()
 train_audio_path = Path('./noizy_dataset') #Audio Path
 train_audio_path = Path('./speech_commands_dataset_small') #Audio Path
 train_audio_path = Path('./speech_commands_dataset_medium') #Audio Path
+#train_audio_path = Path('./free-spoken-digit-dataset-medium')
 train_audio_path = Path('./medium_dataset') #Audio Path
 #train_audio_path = Path('./speech_commands_dataset-v0.01-small') #Audio Path
 
@@ -73,41 +75,66 @@ labels = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight"
 
 all_features = []
 all_label = []
-i=0
+desiredNoOfFeatures=40
+i=1
+durations=[]
+
+sum=0
+for label in labels:
+    files = list(train_audio_path.glob(label + '/*.wav'))
+    for file in files:
+        originalSignal, sr = librosa.load(str(file), sr=8000, mono=True)
+        trimmedSignal, index = librosa.effects.trim(originalSignal)
+        duration=librosa.get_duration(trimmedSignal)
+        sum=sum+duration
+        i+=1
+
+meanDuration=sum/i
+print("Extracting Features from "+str(i)+" files, mean duration="+str(meanDuration))
 for label in labels:
     files = list(train_audio_path.glob(label+'/*.wav'))
+    print("processing "+label)
     for file in files:
         # Load and Resample all files to 8k and convert to mono
         #print(str(file.parent)+'/'+str(file.name))
-        data, sr = librosa.load(str(file), sr=8000, mono=True)
+        originalSignal, sr = librosa.load(str(file), sr=8000, mono=True)
+        processedSignal, index = librosa.effects.trim(originalSignal)
+        duration = librosa.get_duration(processedSignal)
+        if duration > meanDuration:
+            ratio = meanDuration / duration
+        else:
+            ratio = duration / meanDuration
 
-        # sd.play(data, fs)
-        # status = sd.wait()
+        processedSignal = librosa.effects.time_stretch(processedSignal, ratio)
 
-        filtered = bandpassIIRFilter(data, sr)
+        #sd.play(originalSignal, sr)
+        #status = sd.wait()
+#
+        processedSignal = bandpassIIRFilter(processedSignal, sr)
 
-        # sd.play(filtered, fs)
-        # status = sd.wait()
+        #sd.play(filtered, sr)
+        #status = sd.wait()
 
-        mfccs = librosa.feature.mfcc(y=filtered, sr=sr) # Generate mfccs from a time series
+        #mfccs = librosa.feature.mfcc(y=filtered, sr=sr) # Generate mfccs from a time series
         #mfccs = librosa.feature.mfcc(y=filtered, sr=sr, hop_length=1024, htk=True)  # Using a different hop length and HTK-style Mel frequencies
 
-        S = librosa.feature.melspectrogram(y=filtered, sr=sr, n_mels=13,fmax=800) # Use a pre-computed log-power Mel spectrogram
-        mfccs = librosa.feature.mfcc(S=librosa.power_to_db(S))
+        #S = librosa.feature.melspectrogram(y=filtered, sr=sr, n_mels=40,fmax=2000) # Use a pre-computed log-power Mel spectrogram
+        #mfccs = librosa.feature.mfcc(S=librosa.power_to_db(S))
 
-        #mfccs = librosa.feature.mfcc(y=filtered, sr=sr, n_mfcc=13) # Get specific number of components
+        mfccs = librosa.feature.mfcc(y=processedSignal, sr=sr, n_mfcc=13) # Get specific number of components
 
         # Visualize the MFCC series
+
         #librosa.display.specshow(mfccs, x_axis='time')
         #plt.colorbar()
-        #plt.title('MFCC')
+        #plt.title('MFCC'+str(file.parent)+str(mfccs.shape))
         #plt.tight_layout()
         #plt.show()
 
         # Compare different DCT bases
         #m_slaney = librosa.feature.mfcc(y=filtered, sr=sr, dct_type=2)
-        ##m_htk = librosa.feature.mfcc(y=y, sr=sr, dct_type=3)
-
+        #m_htk = librosa.feature.mfcc(y=filtered, sr=sr, dct_type=3)
+        #m_htk_flat=m_htk.flatten()
         # Visualization
         #plt.figure(figsize=(10, 6))
         #plt.subplot(2, 1, 1)
@@ -121,27 +148,47 @@ for label in labels:
         #plt.tight_layout()
         #plt.show()
         mfccs_flat=mfccs.flatten()
-        mfccs_flat=mfccs_flat[:100]
         mean_mfccs=mfccs.mean(axis=1)
         ##########all_features.append(features)
         #print("MFCCS",mfccs.shape)
         ##########all_label.append(label)
 
         # LPC
-        lpc=librosa.lpc(filtered, 16)
-        lpc_and_mfcc = np.concatenate((mean_mfccs, lpc), axis=0)
-        lpc_and_mfcc_flat = np.concatenate((mfccs_flat, lpc), axis=0)
+        #lpc=librosa.lpc(filtered, 16)
+        #lpc_and_mean_mfcc = np.concatenate((mean_mfccs, lpc), axis=0)
+        #lpc_and_flat_mfcc = np.concatenate((mfccs_flat, lpc), axis=0)
+
+        featuresSize=desiredNoOfFeatures*16
+
 
 
         #print("LPC+MFCC", mfccs_flat.shape)
 
-        all_features.append(lpc_and_mfcc_flat)
+        if len(mfccs_flat) < featuresSize:
+            zero_padded = np.lib.pad(mfccs_flat, ((0),(featuresSize - len(mfccs_flat))), 'constant', constant_values=(1))
+            all_features.append(zero_padded)
+            #all_features.append(mfccs_flat)
+        else:
+            all_features.append(mfccs_flat)
+
+        #all_features.append(m_htk_flat)
         all_label.append(label)
-        if(i==0):
-            print(all_features[0].shape)
+        if(mfccs.shape!=(13,16)):
+            print(len(processedSignal),i,mfccs_flat.shape,file.name,file.parent)
+            S = librosa.feature.melspectrogram(y=processedSignal, sr=sr)
+            plt.figure(figsize=(10, 4))
+            S_dB = librosa.power_to_db(S, ref=np.max)
+            librosa.display.specshow(S_dB, x_axis='time', y_axis='mel', sr=sr, fmax=8000)
+            plt.colorbar(format='%+2.0f dB')
+            plt.title('Mel-frequency spectrogram')
+            plt.tight_layout()
+            plt.show()
+            pass
+            #print(mfccs_flat)
+            #print(all_features[0])
         i+=1
 
-print("Features are extracted")
+print("Features have been extracted")
 
 
 
@@ -175,9 +222,9 @@ n_cols = x_tr.shape[1]
 
 model = Sequential()
 
-model.add(Dense(int(n_cols*2), activation='sigmoid', input_dim=n_cols))
+model.add(Dense(int(n_cols*1.5), activation='sigmoid', input_dim=n_cols))
 #model.add(Dropout(0.5))
-#model.add(Dense(60, activation='relu'))
+#model.add(Dense(int(n_cols*1.2), activation='sigmoid'))
 #model.add(Dropout(0.5))
 # model.add(Dense(500, activation='relu'))
 model.add(Dense(10, activation='sigmoid'))
@@ -204,7 +251,7 @@ plt.plot(history.history['val_loss'], label='test')
 plt.legend()
 plt.show()
 
-model = load_model(filepath)
+#model = load_model(filepath)
 
 # evaluate model
 _, accuracy = model.evaluate(x_tr, y_tr)
