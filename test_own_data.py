@@ -4,6 +4,7 @@ from pydub import AudioSegment
 from pydub.silence import split_on_silence
 import sounddevice as sd
 import soundfile as sf
+import matplotlib.pyplot as plt
 import librosa   # for audio processing
 import IPython.display as ipd
 from keras.utils import np_utils
@@ -13,10 +14,14 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import backend as K
 from keras.models import load_model
 
+import librosa.display
+
+
 current_directory = os.getcwd()
 filepath = current_directory + '/model_conv_kostas.hdf5'
-model = load_model(filepath)
-classes = np.load('classes_conv.npy')
+model = load_model(filepath) #Load the trained model. 
+classes = np.load('classes_conv.npy') #Load the classes used for training.
+
 
 
 def predict(audio):
@@ -40,9 +45,9 @@ def predict(audio):
 #combined_sounds.export("testing_sequence.wav", format="wav")
 
 
-#CREATE YOUR OWN AUDIO FILE TO TEST ON.
+############ CREATE YOUR OWN AUDIO FILE TO TEST ON ############
 #samplerate = 16000  
-#duration = 11 #seconds
+#duration = 10 #seconds
 #filename = 'testing_sequence.wav'
 #print("start")
 #mydata = sd.rec(int(samplerate * duration), samplerate=samplerate,
@@ -50,6 +55,15 @@ def predict(audio):
 #print("end")
 #sd.wait()
 #sf.write(filename, mydata, samplerate)
+    
+
+
+
+########### VISUALIZE THE WAVE PLOT OF THE TESTING SEQUENCE ############
+samples, sample_rate = librosa.load(current_directory+ "/testing_sequence_agapi.wav")
+plt.figure(figsize=(12, 4))
+librosa.display.waveplot(samples, sr=sample_rate)
+
 
 ########## SPLIT THE PHRASE INTO WORDS ############
 sound_file = AudioSegment.from_wav("testing_sequence_agapi.wav")
@@ -58,7 +72,7 @@ audio_chunks = split_on_silence(sound_file,
     min_silence_len=500,
 
     # consider it silent if quieter than -64 dBFS
-    silence_thresh=-56
+    silence_thresh=-64
 )
 
 #Export each digit of a sequence in a .wav file.
