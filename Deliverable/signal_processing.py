@@ -37,7 +37,7 @@ def bandpassIIRFilter(data, fs, lowcut=85, highcut=255, order=4):
 
     return y
 
-def processDataset(labels,train_audio_path):
+def process_dataset(labels,train_audio_path):
     i = 1
     durations = []
     sum = 0
@@ -61,7 +61,28 @@ def processDataset(labels,train_audio_path):
                 print(sr)
 
     meanDuration=sum/i
-    return processedAudioFiles,meanDuration
+    return processedAudioFiles,all_label,meanDuration,sr
 
+def resample_dataset(labels,train_audio_path,sr):
+    i = 1
+    durations = []
+    sum = 0
+    processedAudioFiles = []
+    all_label = []
+    sr = 8000
+    print("Signal processing")
+    for label in labels:
+        files = list(train_audio_path.glob(label + '/*.wav'))
+        print("processing " + label)
+        for file in files:
+            originalSignal, sr = librosa.load(str(file), sr=sr, mono=True)
+            processedAudioFiles.append(originalSignal)
+            i+=1
+            all_label.append(label)
+            if sr != 8000:
+                print(sr)
+
+    meanDuration=sum/i
+    return processedAudioFiles,all_label,meanDuration,sr
 # Neural here
 #x_tr, x_val, y_tr, y_val = train_test_split(np.array(x_), np.array(y_), stratify=y_, test_size=0.2, random_state=777, shuffle=True)
