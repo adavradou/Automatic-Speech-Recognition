@@ -55,7 +55,7 @@ def rawData(audioStreams,sr):
     i = 0
 
     all_features = []
-    print("Extracting Features from " + str(i) + " files")
+    print("Extracting Features from " + str(len(audioStreams))  + " files")
     for audio in audioStreams:
         samples = librosa.resample(audio, sr, 8000)
         if len(samples) == 8000:
@@ -63,7 +63,7 @@ def rawData(audioStreams,sr):
 
         i += 1
     print("The dataset has been created")
-    return all.features
+    return all_features
 
 
 def rawDataStretched(audioStreams,meanDuration):
@@ -71,7 +71,7 @@ def rawDataStretched(audioStreams,meanDuration):
     i = 0
 
     all_features = []
-    print("Extracting Features from " + str(i) + " files, mean duration=" + str(meanDuration))
+    print("Extracting Features from " + str(len(audioStreams))  + " files, mean duration=" + str(meanDuration))
     for audio in audioStreams:
 
         duration = librosa.get_duration(audio)
@@ -88,7 +88,7 @@ def rawDataStretched(audioStreams,meanDuration):
 
         i += 1
     print("The dataset has been stretched to the mean duration of the tracks, without affecting pitch")
-    return all.features
+    return all_features
 
 
 def extract_mfccs(audioStreams,sr,meanDuration):
@@ -100,7 +100,7 @@ def extract_mfccs(audioStreams,sr,meanDuration):
     all_features = []
     desiredNoOfFeatures=13
     # Features Extraction an time normalisation
-    print("Extracting Features from "+str(i)+" files, mean duration="+str(meanDuration))
+    print("Extracting Features from " + str(len(audioStreams)) + " files, mean duration="+str(meanDuration))
     for audio in audioStreams:
 
         #sd.play(audio, sr)
@@ -120,26 +120,23 @@ def extract_mfccs(audioStreams,sr,meanDuration):
         mfccs = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=desiredNoOfFeatures, hop_length=178)  # Get specific number of components
         mfccs_flat = mfccs.flatten()
 
-        #Normalize feature set size
+        #Normalize feature data set size
         featuresSize = desiredNoOfFeatures * 44  # mfccs.shape[1]
-        # print('n/ Features Size: ', featuresSize)
 
         if len(mfccs_flat) < featuresSize:
-            zero_padded = np.lib.pad(mfccs_flat, (0, (featuresSize - len(mfccs_flat))), 'constant', constant_values=1)
+            zero_padded = np.lib.pad(mfccs_flat, (0, (featuresSize - len(mfccs_flat))), 'constant', constant_values=0)
             all_features.append(zero_padded)
             fsizeL += 1
-            # print('\nLess than ', featuresSize, ': ', mfccs_flat.shape, ' became ', zero_padded.shape)
         elif len(mfccs_flat) > featuresSize:
             all_features.append(mfccs_flat[:featuresSize])
             fsizeG += 1
-            # print('\nMore than ', featuresSize, ': ', mfccs_flat.shape, ' became ', mfccs_flat[:featuresSize].shape)
         else:
             fsizeEQ += 1
             all_features.append(mfccs_flat)
 
         i+=1
     print("MFCC features have been extracted")
-    return all.features
+    return all_features
 
 
 def fourier_transform(audioStreams,sr):
@@ -147,23 +144,28 @@ def fourier_transform(audioStreams,sr):
     i=0
 
     all_features = []
-    print("Extracting Features from "+str(i)+" files, mean duration="+str(meanDuration))
+    print("Extracting Features from "+str(len(audioStreams)) +" files, mean duration=")
     for audio in audioStreams:
 
         frequency, fourierMagnitude, sampleCount = fourierTransform(sr, audio, str(i))
-
-        all_features.append(fourierMagnitude)
+        print(sampleCount,len(frequency))
+        if len(fourierMagnitude) < sr:
+            zero_padded = np.lib.pad(fourierMagnitude, (0, (sr - len(fourierMagnitude))), 'constant', constant_values=0)
+            all_features.append(zero_padded)
+            print(zero_padded)
+        else:
+            all_features.append(fourierMagnitude[:sr])
 
         i+=1
     print("The dataset has been converted from time space to frequency space")
-    return all.features
+    return all_features
 
 def fourier_transform_stretched(audioStreams,sr,meanDuration):
     sumdur=0
     i=0
 
     all_features = []
-    print("Extracting Features from "+str(i)+" files, mean duration="+str(meanDuration))
+    print("Extracting Features from "+str(len(audioStreams)) +" files, mean duration="+str(meanDuration))
     for audio in audioStreams:
 
         duration = librosa.get_duration(audio)
@@ -182,7 +184,7 @@ def fourier_transform_stretched(audioStreams,sr,meanDuration):
 
         i+=1
     print("The dataset has been converted from time space to frequency space")
-    return all.features
+    return all_features
 
 
 def extract_fourier_peaks(audioStreams,sr,meanDuration):
@@ -192,7 +194,7 @@ def extract_fourier_peaks(audioStreams,sr,meanDuration):
     all_features = []
     desiredNoOfFeatures=13
     # Features Extraction an time normalisation
-    print("Extracting Features from "+str(i)+" files, mean duration="+str(meanDuration))
+    print("Extracting Features from "+str(len(audioStreams)) +" files, mean duration="+str(meanDuration))
     for audio in audioStreams:
 
         #sd.play(audio, sr)
@@ -213,13 +215,10 @@ def extract_fourier_peaks(audioStreams,sr,meanDuration):
 
         frequency, fourierMagnitude, sampleCount, peaks = fourierPeaks(sr, audio, str(i), no_of_peaks=66)
 
-    # audio <- Raw Signal
-    # fourierMagnitude <- Fourier representation of the signal (1o tetartimorio)
-
         all_features.append(fourierMagnitude)
 
         i+=1
     print("Fourier Peaks have been extracted")
-    return all.features
+    return all_features
 
 

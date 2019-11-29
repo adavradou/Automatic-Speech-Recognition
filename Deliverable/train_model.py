@@ -13,7 +13,7 @@ from keras import backend as K
 
 import matplotlib.pyplot as plt
 
-def train_dense(all_features,all_label,labels, model_name="model_dense"):
+def train_dense(all_features, all_label, labels, model_name="model_dense"):
     current_directory = os.getcwd()
     # print('X data:\n', all_features)    # [array([-0.0003346 , ..., ], dtype=float32), array....]
     # print('Y data:\n', all_label)   # ['zero', ..., 'nine']
@@ -61,11 +61,11 @@ def train_dense(all_features,all_label,labels, model_name="model_dense"):
     # Compile Model
     model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
     # Early Stopping
-    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=40, min_delta=0.05)
+    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=10, min_delta=0.05)
     # Keep only a single checkpoint, the best over test accuracy.
     filepath = current_directory + '/dense_' + model_name + '.hdf5'
     mc = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
-    model.save(current_directory + '/dense' + model_name + '.hdf5', True, True)
+    model.save(filepath, True, True)
 
     # Fit Model
     history = model.fit(x_tr, y_tr, epochs=100, callbacks=[es, mc], batch_size=64, validation_data=(x_val, y_val))
@@ -150,7 +150,6 @@ def train_convolutional(all_features,all_label,labels, model_name="model_conv"):
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=10, min_delta=0.0001)
 
-
     filepath = current_directory + '/conv_' + model_name + '.hdf5'
 
     # Keep only a single checkpoint, the best over test accuracy.
@@ -164,13 +163,6 @@ def train_convolutional(all_features,all_label,labels, model_name="model_conv"):
     plt.legend()
     plt.show()
 
-    # evaluate model
-    _, accuracy = model.evaluate(x_tr, y_tr)
-    print('Accuracy: %.2f' % (accuracy * 100))
-    # print(y_val)
-    y_pred = model.predict_classes(x_tr)
-
-    # Scores
     score_train = model.evaluate(x_tr, y_tr, verbose=0)
     score_val = model.evaluate(x_val, y_val, verbose=0)
 

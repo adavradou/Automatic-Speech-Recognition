@@ -61,9 +61,9 @@ def process_dataset(labels,train_audio_path):
                 print(sr)
 
     meanDuration=sum/i
-    return processedAudioFiles,all_label,meanDuration,sr
+    return processedAudioFiles,all_label,sr,meanDuration
 
-def resample_dataset(labels,train_audio_path,sr):
+def resample_dataset(labels,train_audio_path):
     i = 1
     durations = []
     sum = 0
@@ -83,6 +83,7 @@ def resample_dataset(labels,train_audio_path,sr):
                 print(sr)
 
     meanDuration=sum/i
-    return processedAudioFiles,all_label,meanDuration,sr
+    return processedAudioFiles,all_label,sr,meanDuration
+
 # Neural here
 #x_tr, x_val, y_tr, y_val = train_test_split(np.array(x_), np.array(y_), stratify=y_, test_size=0.2, random_state=777, shuffle=True)
