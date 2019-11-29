@@ -58,23 +58,28 @@ def rawData(audioStreams,sr):
     print("Extracting Features from " + str(len(audioStreams))  + " files")
     for audio in audioStreams:
         samples = librosa.resample(audio, sr, 8000)
-        if len(samples) == 8000:
-            all_features.append(samples)
+
+        if len(samples) < 8000:
+            zero_padded = np.lib.pad(audio, (0, (8000 - len(samples))), 'constant', constant_values=0)
+            all_features.append(zero_padded)
+            print(zero_padded)
+        else:
+            all_features.append(samples[:8000])
 
         i += 1
     print("The dataset has been created")
     return all_features
 
 
-def rawDataStretched(audioStreams,meanDuration):
+def rawDataStretched(audioStreams,sr,meanDuration):
     sumdur = 0
     i = 0
 
     all_features = []
     print("Extracting Features from " + str(len(audioStreams))  + " files, mean duration=" + str(meanDuration))
     for audio in audioStreams:
-
-        duration = librosa.get_duration(audio)
+        samples = librosa.resample(audio, sr, 8000)
+        duration = librosa.get_duration(samples)
         sumdur += duration
 
         ratio = duration / meanDuration
@@ -82,7 +87,14 @@ def rawDataStretched(audioStreams,meanDuration):
             ratio = 0.05
 
         # Stretrch audio to normalise spoken word duration
-        audio = librosa.effects.time_stretch(audio, ratio)
+        audio = librosa.effects.time_stretch(samples, ratio)
+
+        if len(audio) < 8000:
+            zero_padded = np.lib.pad(audio, (0, (8000 - len(audio))), 'constant', constant_values=0)
+            all_features.append(zero_padded)
+            print(zero_padded)
+        else:
+            all_features.append(audio[:8000])
 
         all_features.append(audio)
 
