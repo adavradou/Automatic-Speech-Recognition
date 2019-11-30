@@ -11,7 +11,7 @@ def fourierTransform(fs,y,label):
 
     yf = fft(y)
 
-    #Extract 1st quarter of frequency domain data
+    # Extract 1st quarter of frequency domain data
     xf = np.linspace(0.0, 1.0 / (2.0 * T), N / 2) * 0.5  # No need for both semi-axis the rfequency domain in Hertz
     yf = 2.0 * np.abs(yf[:N // 2])  # The frequency magnitude
 
@@ -29,33 +29,33 @@ def fourierPeaks(fs,y,label,no_of_peaks):
 
     yf = fft(y)
 
-    xf = np.linspace(0.0, 1.0/(2.0*T), N/2) * 0.5 # No need for both semi-axis the rfequency domain in Hertz
+    xf = np.linspace(0.0, 1.0/(2.0*T), N/2) * 0.5  # No need for both semi-axis the rfequency domain in Hertz
     yf = 2.0 * np.abs(yf[:N//2]) # The frequency magnitude
 
-    #plt.plot(xf,yf,label=str(label) + ' - file :' + file.name +"N" + str(N)) # plot the fourier transform
-    #plt.show()
+    # plt.plot(xf,yf,label=str(label) + ' - file :' + file.name +"N" + str(N)) # plot the fourier transform
+    # plt.show()
 
     # Find dominant freq peak centers and train matching them with their frequency domains
-    peaks=[]
+    peaks = []
 
-    i=0
-    step=10 # Peaks greter than step Hz in distance
+    i = 0
+    step = 10  # Peaks greter than step Hz in distance
     for point in yf:
-        peaks.append([xf[i],point])
-        i+=1
+        peaks.append([xf[i], point])
+        i += 1
 
     # Choose greatest magnitude
-    peaks=sorted(peaks, key=lambda x: x[1],reverse=True)
-    peaks=peaks[:no_of_peaks]
+    peaks = sorted(peaks, key=lambda x: x[1],reverse=True)
+    peaks = peaks[:no_of_peaks]
 
-    return xf,yf,N,peaks
+    return xf, yf, N, peaks
 
 
-def rawData(audioStreams,sr):
+def rawData(audioStreams, sr):
     i = 0
 
     all_features = []
-    print("Extracting Features from " + str(len(audioStreams))  + " files")
+    print("Extracting Features from " + str(len(audioStreams)) + " files")
     for audio in audioStreams:
         samples = librosa.resample(audio, sr, 8000)
 
@@ -71,12 +71,12 @@ def rawData(audioStreams,sr):
     return all_features
 
 
-def rawDataStretched(audioStreams,sr,meanDuration):
+def rawDataStretched(audioStreams, sr, meanDuration):
     sumdur = 0
     i = 0
 
     all_features = []
-    print("Extracting Features from " + str(len(audioStreams))  + " files, mean duration=" + str(meanDuration))
+    print("Extracting Features from " + str(len(audioStreams)) + " files, mean duration=" + str(meanDuration))
     for audio in audioStreams:
         samples = librosa.resample(audio, sr, 8000)
         duration = librosa.get_duration(samples)
@@ -103,23 +103,26 @@ def rawDataStretched(audioStreams,sr,meanDuration):
     return all_features
 
 
-def extract_mfccs(audioStreams,sr,meanDuration):
-    sumdur=0
-    i=0
+def extract_mfccs(audioStreams, sr, meanDuration):
+    sumdur = 0
+    i = 0
     fsizeEQ = 0
     fsizeL = 0
     fsizeG = 0
     all_features = []
-    desiredNoOfFeatures=13
+    desiredNoOfFeatures = 13
+    percentage = len(audioStreams) // 100
     # Features Extraction an time normalisation
     print("Extracting Features from " + str(len(audioStreams)) + " files, mean duration="+str(meanDuration))
     for audio in audioStreams:
 
-        #sd.play(audio, sr)
-        #status = sd.wait()
+        # sd.play(audio, sr)
+        # status = sd.wait()
+        if i % percentage == 0:
+            print(int(i / percentage), '% completed')
 
         duration = librosa.get_duration(audio)
-        sumdur+=duration
+        sumdur += duration
 
         ratio = duration / meanDuration
         if ratio < 0.05:
@@ -128,11 +131,11 @@ def extract_mfccs(audioStreams,sr,meanDuration):
         # Stretrch audio to normalise spoken word duration
         audio = librosa.effects.time_stretch(audio, ratio)
 
-        #Extract features
+        # Extract features
         mfccs = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=desiredNoOfFeatures, hop_length=178)  # Get specific number of components
         mfccs_flat = mfccs.flatten()
 
-        #Normalize feature data set size
+        # Normalize feature data set size
         featuresSize = desiredNoOfFeatures * 44  # mfccs.shape[1]
 
         if len(mfccs_flat) < featuresSize:
@@ -146,14 +149,14 @@ def extract_mfccs(audioStreams,sr,meanDuration):
             fsizeEQ += 1
             all_features.append(mfccs_flat)
 
-        i+=1
+        i += 1
     print("MFCC features have been extracted")
     return all_features
 
 
-def fourier_transform(audioStreams,sr):
-    sumdur=0
-    i=0
+def fourier_transform(audioStreams, sr):
+    sumdur = 0
+    i = 0
 
     all_features = []
     print("Extracting Features from "+str(len(audioStreams)) +" files, mean duration=")
@@ -168,20 +171,20 @@ def fourier_transform(audioStreams,sr):
         else:
             all_features.append(fourierMagnitude[:sr])
 
-        i+=1
+        i += 1
     print("The dataset has been converted from time space to frequency space")
     return all_features
 
-def fourier_transform_stretched(audioStreams,sr,meanDuration):
-    sumdur=0
-    i=0
+def fourier_transform_stretched(audioStreams, sr, meanDuration):
+    sumdur = 0
+    i = 0
 
     all_features = []
-    print("Extracting Features from "+str(len(audioStreams)) +" files, mean duration="+str(meanDuration))
+    print("Extracting Features from "+str(len(audioStreams)) + " files, mean duration=" + str(meanDuration))
     for audio in audioStreams:
 
         duration = librosa.get_duration(audio)
-        sumdur+=duration
+        sumdur += duration
 
         ratio = duration / meanDuration
         if ratio < 0.05:
@@ -199,21 +202,21 @@ def fourier_transform_stretched(audioStreams,sr,meanDuration):
     return all_features
 
 
-def extract_fourier_peaks(audioStreams,sr,meanDuration):
-    sumdur=0
-    i=0
+def extract_fourier_peaks(audioStreams, sr, meanDuration):
+    sumdur = 0
+    i = 0
 
     all_features = []
-    desiredNoOfFeatures=13
+    desiredNoOfFeatures = 13
     # Features Extraction an time normalisation
-    print("Extracting Features from "+str(len(audioStreams)) +" files, mean duration="+str(meanDuration))
+    print("Extracting Features from "+str(len(audioStreams)) + " files, mean duration=" + str(meanDuration))
     for audio in audioStreams:
 
-        #sd.play(audio, sr)
-        #status = sd.wait()
+        # sd.play(audio, sr)
+        # status = sd.wait()
 
         duration = librosa.get_duration(audio)
-        sumdur+=duration
+        sumdur += duration
 
         ratio = duration / meanDuration
         if ratio < 0.05:
@@ -222,14 +225,14 @@ def extract_fourier_peaks(audioStreams,sr,meanDuration):
         # Stretrch audio to normalise spoken word duration
         audio = librosa.effects.time_stretch(audio, ratio)
 
-        #sd.play(audio, sr)
-        #status = sd.wait()
+        # sd.play(audio, sr)
+        # status = sd.wait()
 
         frequency, fourierMagnitude, sampleCount, peaks = fourierPeaks(sr, audio, str(i), no_of_peaks=66)
 
         all_features.append(fourierMagnitude)
 
-        i+=1
+        i += 1
     print("Fourier Peaks have been extracted")
     return all_features
 
