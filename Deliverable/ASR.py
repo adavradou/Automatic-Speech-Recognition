@@ -85,13 +85,6 @@ else:
 processed_predict_files, sr, meanDuration = signal_processing.process_predict_dataset(labels, Path(test_audio_path))
 
 
-predict_features=feature_exrtaction.rawData(processed_predict_files, sr)
-#predict_features=feature_exrtaction.rawDataStretched(processed_predict_files, sr, meanDuration)
-#predict_features=feature_exrtaction.fourier_transform(processed_predict_files, sr)
-#predict_features=feature_exrtaction.fourier_transform_stretched(processed_predict_files, sr, meanDuration)
-predict_features=feature_exrtaction.extract_mfccs(processed_predict_files, sr, meanDuration)
-#predict_features=feature_exrtaction.extract_fourier_peaks(processed_predict_files,sr,meanDuration)
-
 print("Predictions")
 # Predict based on trained model
 predict.predict(model_path, predict_features)
