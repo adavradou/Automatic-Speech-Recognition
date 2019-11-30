@@ -58,14 +58,11 @@ elif ans_m == 2:
 else:
     sys.exit('Invalid selection')
 
-#model_path = train_model.train_dense(all_features,all_labels, labels, model_name="dense_full")
-model_path = train_model.train_convolutional(all_features,all_labels, labels, "Just_testing_conv")
-
 test_audio_path="../free-spoken-digit-dataset-medium"
 
 # Predicting Features extraction
 # raw_predict_files,all_label, sr, meanDuration = signal_processing.resample_dataset(["predict_set"], Path(test_audio_path))
-processed_predict_files, all_labels, sr, meanDuration = signal_processing.process_dataset(["predict_set"], Path(test_audio_path))
+processed_predict_files, all_labels, sr, meanDuration = signal_processing.process_dataset(labels, Path(test_audio_path))
 
 if ans_pp == 1:
     predict_features =feature_exrtaction.rawData(processed_predict_files, sr)
@@ -87,6 +84,8 @@ processed_predict_files, sr, meanDuration = signal_processing.process_predict_da
 
 print("Predictions")
 # Predict based on trained model
-predict.predict(model_path, predict_features)
-predict.predict(model_path, predict_features, processed_predict_files,"conv")
+if (ans_m==2):
+    predict.predict(model_path, predict_features, processed_predict_files,"conv")
+else :
+    predict.predict(model_path, predict_features, processed_predict_files, "dense")
 
