@@ -23,8 +23,6 @@ def train_dense(all_features, all_label, labels, model_name="model_dense"):
     print('Size of Y:\n', all_label.shape)  # (77,)
     # print('X data (as array):\n', all_features)   # [[-3.3460365e-04 ...][...]...]
     # print('Y data (as array):\n', all_label)  # ['zero' ... 'nine']
-    print('Size of X:\n', all_features.shape)
-    print('Size of Y:\n', all_label.shape)
 
     # sc = StandardScaler()
     # x_ = sc.fit_transform(all_features)
@@ -54,11 +52,6 @@ def train_dense(all_features, all_label, labels, model_name="model_dense"):
     # model.add(Dropout(0.5))
     # model.add(Dense(500, activation='relu'))
     model.add(Dense(30, activation='sigmoid'))
-    model.add(Dense(36, activation='relu', input_dim=n_cols))  # , activity_regularizer=l1(0.01)))
-    model.add(Dense(52, activation='relu'))
-    model.add(Dense(52, activation='relu'))
-    model.add(Dense(36, activation='relu'))
-    model.add(Dense(24, activation='relu'))
 
     model.add(Dense(len(labels), activation='softmax', name='pred'))
 
