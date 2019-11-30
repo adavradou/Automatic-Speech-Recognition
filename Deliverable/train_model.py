@@ -15,8 +15,14 @@ import matplotlib.pyplot as plt
 
 def train_dense(all_features, all_label, labels, model_name="model_dense"):
     current_directory = os.getcwd()
+    # print('X data:\n', all_features)    # [array([-0.0003346 , ..., ], dtype=float32), array....]
+    # print('Y data:\n', all_label)   # ['zero', ..., 'nine']
     all_features = np.array(all_features)
     all_label = np.array(all_label)
+    print('Size of X:\n', all_features.shape)  # (77, 8000)
+    print('Size of Y:\n', all_label.shape)  # (77,)
+    # print('X data (as array):\n', all_features)   # [[-3.3460365e-04 ...][...]...]
+    # print('Y data (as array):\n', all_label)  # ['zero' ... 'nine']
     print('Size of X:\n', all_features.shape)
     print('Size of Y:\n', all_label.shape)
 
@@ -24,19 +30,30 @@ def train_dense(all_features, all_label, labels, model_name="model_dense"):
     # x_ = sc.fit_transform(all_features)
     x_ = all_features
     y_ = all_label
+    # print('Standard Scalar:\n', x_)
     le = LabelEncoder()
     y_ = le.fit_transform(all_label)
     classes = list(le.classes_)
+    # print('Label Encoder:\n', y_)
+    # print('classes list:\n', classes)
     np.save(current_directory + '/classes_dense.npy', le.classes_)
     y_ = np_utils.to_categorical(y_, num_classes=len(labels))  # From int to one-hot
     print('to_categorical:\n', y_)
     x_tr, x_val, y_tr, y_val = train_test_split(np.array(x_), np.array(y_), stratify=y_, test_size=0.2,
                                                 random_state=777, shuffle=True)
     print('x_tr: ', x_tr.shape, '\nx_val: ', x_val.shape, '\ny_tr: ', y_tr.shape, '\ny_val: ', y_val.shape)
+    # print('y_val:\n', y_val)
     n_cols = x_tr.shape[1]
 
     model = Sequential()
 
+    model.add(Dense(int(n_cols * 1.5), activation='sigmoid', input_dim=n_cols))
+    # model.add(Dropout(0.5))
+    # model.add(Dense(int(n_cols*1.2), activation='sigmoid'))
+    model.add(Dense(int(n_cols * 0.75), activation='sigmoid'))
+    # model.add(Dropout(0.5))
+    # model.add(Dense(500, activation='relu'))
+    model.add(Dense(30, activation='sigmoid'))
     model.add(Dense(36, activation='relu', input_dim=n_cols))  # , activity_regularizer=l1(0.01)))
     model.add(Dense(52, activation='relu'))
     model.add(Dense(52, activation='relu'))
