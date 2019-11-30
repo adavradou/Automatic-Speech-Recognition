@@ -58,26 +58,6 @@ elif ans_m == 2:
 else:
     sys.exit('Invalid selection')
 
-# Record Audio
-fs = 8000
-max_seconds = 30
-print("Recording Audio...")
-myrecording = sd.rec(int(max_seconds * fs), samplerate=fs, channels=1)
-input("Press Enter to stop recording...")
-sd.stop()
-write('./recordings/recording.wav', fs, myrecording)  # Save as WAV file
-
-test_audio_path = "./recordings"
-# Split Audio to test
-# split_to_words.splitter("recording.wav",test_audio_path+"/predict_set")
-
-all_features=feature_exrtaction.rawData(processedAudioFiles, sr)
-#all_features=feature_exrtaction.rawDataStretched(processedAudioFiles, sr, meanDuration)
-#all_features=feature_exrtaction.fourier_transform(processedAudioFiles, sr)
-#all_features=feature_exrtaction.fourier_transform_stretched(processedAudioFiles, sr, meanDuration)
-#all_features=feature_exrtaction.extract_mfccs(processedAudioFiles, sr, meanDuration)
-#all_features=feature_exrtaction.extract_fourier_peaks(processedAudioFiles,sr,meanDuration)
-
 #model_path = train_model.train_dense(all_features,all_labels, labels, model_name="dense_full")
 model_path = train_model.train_convolutional(all_features,all_labels, labels, "Just_testing_conv")
 
@@ -109,7 +89,7 @@ predict_features=feature_exrtaction.rawData(processed_predict_files, sr)
 #predict_features=feature_exrtaction.rawDataStretched(processed_predict_files, sr, meanDuration)
 #predict_features=feature_exrtaction.fourier_transform(processed_predict_files, sr)
 #predict_features=feature_exrtaction.fourier_transform_stretched(processed_predict_files, sr, meanDuration)
-#predict_features=feature_exrtaction.extract_mfccs(processed_predict_files, sr, meanDuration)
+predict_features=feature_exrtaction.extract_mfccs(processed_predict_files, sr, meanDuration)
 #predict_features=feature_exrtaction.extract_fourier_peaks(processed_predict_files,sr,meanDuration)
 
 print("Predictions")
