@@ -48,7 +48,15 @@ def fourierPeaks(fs,y,label,no_of_peaks):
     peaks=sorted(peaks, key=lambda x: x[1],reverse=True)
     peaks=peaks[:no_of_peaks]
 
-    return xf,yf,N,peaks
+    peaksDiffs=[]
+    i=0
+    for peak in peaks:
+        if i > 1:
+            peaksDiffs.append(peak[0]-prev[0])
+        prev=peak
+        i+=1
+
+    return xf,yf,N,peaksDiffs
 
 
 def rawData(audioStreams,sr):
