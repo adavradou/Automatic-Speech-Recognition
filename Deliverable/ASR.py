@@ -35,11 +35,11 @@ ans_m = int(input('Select one of the above for train\n'))
 if ans_pp == 1:
     all_features = feature_exrtaction.rawData(processedAudioFiles, sr)
 elif ans_pp == 2:
-    all_features = feature_exrtaction.rawDataStretched(processedAudioFiles, sr, meanDuration)   # error
+    all_features = feature_exrtaction.rawDataStretched(processedAudioFiles, sr, meanDuration)   
 elif ans_pp == 3:
-    all_features = feature_exrtaction.fourier_transform(processedAudioFiles, sr)    # error at full dataset
+    all_features = feature_exrtaction.fourier_transform(processedAudioFiles, sr)    
 elif ans_pp == 4:
-    all_features = feature_exrtaction.fourier_transform_stretched(processedAudioFiles, sr, meanDuration)  #error
+    all_features = feature_exrtaction.fourier_transform_stretched(processedAudioFiles, sr, meanDuration)  
 elif ans_pp == 5:
     all_features = feature_exrtaction.extract_mfccs(processedAudioFiles, sr, meanDuration)
 elif ans_pp == 6:
