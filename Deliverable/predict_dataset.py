@@ -20,9 +20,9 @@ model_path="./conv_Just_testing_conv.hdf5"
 processed_predict_files, sr, meanDuration = signal_processing.process_predict_dataset(["george_set"], Path(test_audio_path))
 
 
-#predict_features=feature_exrtaction.rawData(processed_predict_files, sr)
+predict_features=feature_exrtaction.rawData(processed_predict_files, sr)
 #predict_features=feature_exrtaction.rawDataStretched(processed_predict_files, sr, meanDuration)
-predict_features=feature_exrtaction.fourier_transform(processed_predict_files, sr)
+#predict_features=feature_exrtaction.fourier_transform(processed_predict_files, sr)
 #predict_features,feature_size=feature_exrtaction.fourier_transform_stretched(processed_predict_files, sr, meanDuration,feature_size)
 #predict_features=feature_exrtaction.extract_mfccs(processed_predict_files, sr, meanDuration)
 #predict_features=feature_exrtaction.extract_fourier_peaks(processed_predict_files,sr,meanDuration)
