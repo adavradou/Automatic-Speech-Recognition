@@ -27,7 +27,7 @@ from scipy import signal
 # The voiced speech of a typical adult male will have a fundamental frequency from 85 to 180 Hz, and that of a typical adult female from 165 to 255 Hz.
 #def bandpassIIRFilter(data, fs, lowcut=300, highcut=3400, order=4):#telephony - i xroia poy prokyptei apo tis anwteres armonikes einai mallon axristi
 #def bandpassIIRFilter(data, fs, lowcut=60, highcut=800, order=4):
-def bandpassIIRFilter(data, fs, lowcut=85, highcut=255, order=4):
+def bandpassIIRFilter(data, fs, lowcut=60, highcut=2400, order=4):
     nyq = 0.5 * fs
     low = lowcut / nyq
     high = highcut / nyq
@@ -51,7 +51,7 @@ def process_dataset(labels,train_audio_path):
         for file in files:
             originalSignal, sr = librosa.load(str(file), sr=8000, mono=True)
             processedSignal = bandpassIIRFilter(originalSignal, sr)
-            processedSignal, index = librosa.effects.trim(originalSignal)
+            processedSignal, index = librosa.effects.trim(processedSignal)
             duration = librosa.get_duration(processedSignal)
             sum+=duration
             processedAudioFiles.append(processedSignal)
@@ -62,6 +62,32 @@ def process_dataset(labels,train_audio_path):
 
     meanDuration=sum/i
     return processedAudioFiles,all_label,sr,meanDuration
+
+def process_predict_dataset(labels,train_audio_path):
+    i = 1
+    durations = []
+    sum = 0
+    processedAudioFiles = []
+    all_label = []
+    sr = 8000
+    print("Signal processing")
+    for label in labels:
+        files = list(train_audio_path.glob(label + '/*.wav'))
+        print("processing " + label)
+        for file in files:
+            originalSignal, sr = librosa.load(str(file), sr=8000, mono=True)
+            processedSignal = bandpassIIRFilter(originalSignal, sr)
+            processedSignal, index = librosa.effects.trim(processedSignal)
+            duration = librosa.get_duration(processedSignal)
+            sum+=duration
+            processedAudioFiles.append(processedSignal)
+            i+=1
+            all_label.append(label)
+            if sr != 8000:
+                print(sr)
+
+    meanDuration=sum/i
+    return processedAudioFiles,sr,meanDuration
 
 def resample_dataset(labels,train_audio_path):
     i = 1

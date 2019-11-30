@@ -62,7 +62,6 @@ def rawData(audioStreams,sr):
         if len(samples) < 8000:
             zero_padded = np.lib.pad(audio, (0, (8000 - len(samples))), 'constant', constant_values=0)
             all_features.append(zero_padded)
-            print(zero_padded)
         else:
             all_features.append(samples[:8000])
 
@@ -92,11 +91,9 @@ def rawDataStretched(audioStreams,sr,meanDuration):
         if len(audio) < 8000:
             zero_padded = np.lib.pad(audio, (0, (8000 - len(audio))), 'constant', constant_values=0)
             all_features.append(zero_padded)
-            print(zero_padded)
         else:
             all_features.append(audio[:8000])
 
-        all_features.append(audio)
 
         i += 1
     print("The dataset has been stretched to the mean duration of the tracks, without affecting pitch")
@@ -152,30 +149,36 @@ def extract_mfccs(audioStreams,sr,meanDuration):
 
 
 def fourier_transform(audioStreams,sr):
-    sumdur=0
-    i=0
-
+    no_of_features = 3500
+    sumdur = 0
+    i = 0
+    features_size = 0
     all_features = []
-    print("Extracting Features from "+str(len(audioStreams)) +" files, mean duration=")
+    print("Extracting Features from " + str(len(audioStreams)) )
     for audio in audioStreams:
 
-        frequency, fourierMagnitude, sampleCount = fourierTransform(sr, audio, str(i))
-        print(sampleCount,len(frequency))
-        if len(fourierMagnitude) < sr:
-            zero_padded = np.lib.pad(fourierMagnitude, (0, (sr - len(fourierMagnitude))), 'constant', constant_values=0)
-            all_features.append(zero_padded)
-            print(zero_padded)
-        else:
-            all_features.append(fourierMagnitude[:sr])
 
-        i+=1
+        frequency, fourierMagnitude, sampleCount = fourierTransform(sr, audio, str(i))
+        length = 3000
+
+        if len(fourierMagnitude) < length:
+            zero_padded = np.lib.pad(fourierMagnitude, (0, length - len(fourierMagnitude)), 'constant',
+                                     constant_values=0)
+            all_features.append(zero_padded)
+
+        else:
+            all_features.append(fourierMagnitude[:length])
+
+        i += 1
     print("The dataset has been converted from time space to frequency space")
     return all_features
 
+
 def fourier_transform_stretched(audioStreams,sr,meanDuration):
+    no_of_features=3500
     sumdur=0
     i=0
-
+    features_size=0
     all_features = []
     print("Extracting Features from "+str(len(audioStreams)) +" files, mean duration="+str(meanDuration))
     for audio in audioStreams:
@@ -191,8 +194,15 @@ def fourier_transform_stretched(audioStreams,sr,meanDuration):
         audio = librosa.effects.time_stretch(audio, ratio)
 
         frequency, fourierMagnitude, sampleCount = fourierTransform(sr, audio, str(i))
+        length=3000
 
-        all_features.append(fourierMagnitude)
+        if len(fourierMagnitude) < length:
+            zero_padded = np.lib.pad(fourierMagnitude, (0, length - len(fourierMagnitude)), 'constant', constant_values=0)
+            all_features.append(zero_padded)
+
+        else:
+            all_features.append(fourierMagnitude[:length])
+
 
         i+=1
     print("The dataset has been converted from time space to frequency space")
@@ -225,9 +235,20 @@ def extract_fourier_peaks(audioStreams,sr,meanDuration):
         #sd.play(audio, sr)
         #status = sd.wait()
 
-        frequency, fourierMagnitude, sampleCount, peaks = fourierPeaks(sr, audio, str(i), no_of_peaks=66)
+        peaksNo=50
 
-        all_features.append(fourierMagnitude)
+        frequency, fourierMagnitude, sampleCount, peaks = fourierPeaks(sr, audio, str(i), peaksNo)
+
+        peaks_flat=np.array(peaks).flatten()
+
+        peaksNo=peaksNo*2
+
+        if len(peaks_flat) < peaksNo:
+            zero_padded = np.lib.pad(peaks_flat, (0, peaksNo - len(peaks_flat)), 'constant',
+                                     constant_values=0)
+            all_features.append(zero_padded)
+        else :
+            all_features.append(peaks_flat[:peaksNo])
 
         i+=1
     print("Fourier Peaks have been extracted")

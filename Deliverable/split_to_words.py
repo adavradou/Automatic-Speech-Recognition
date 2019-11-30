@@ -21,14 +21,14 @@ def splitter(filename,directory):
     sound_file = AudioSegment.from_wav(filename)
     audio_chunks = split_on_silence(sound_file,
                                     # must be silent for at least half a second
-                                    min_silence_len=500,
+                                    min_silence_len=200,
 
                                     # consider it silent if quieter than -64 dBFS
                                     silence_thresh=-64
                                     )
 
     # Export each digit of a sequence in a .wav file.
-    for i, chunk in enumerate(audio_chunks)-1:
+    for i, chunk in enumerate(audio_chunks):
         out_file = directory+"/chunk{0}.wav".format(i)
         print("exporting", out_file)
         chunk.export(out_file, format="wav")
